@@ -15,6 +15,8 @@
 #include "lualib.h"
 #include "lauxlib.h"
 
+extern int luaopen_audio(lua_State *L);
+
 lua_State *L = NULL;
 
 VM_TIMER_ID_PRECISE sys_timer_id = 0;
@@ -78,18 +80,6 @@ static int msleep_c(lua_State *L)
 
 VMINT32 __main_thread(VM_THREAD_HANDLE thread_handle, void* user_data)
 {
-    if (1)
-    {
-        const char *script = "print('hello')";
-        int error;
-        error = luaL_loadbuffer(L, script, strlen(script), "line") ||
-                lua_pcall(L, 0, 0, 0);
-        if (error) {
-            fprintf(stderr, "%s", lua_tostring(L, -1));
-            lua_pop(L, 1);  /* pop error message from the stack */
-        }
-    }
-
     dotty(L);
 
 	for (;;)
@@ -112,27 +102,25 @@ void vm_main(void)
     lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
     luaL_openlibs(L);  /* open libraries */
 
-    lua_pushcfunction(L, luaopen_io);
-    lua_pushstring(L, "io");
-    lua_call(L, 1, 0);
-
-    lua_pushcfunction(L, luaopen_table);
-    lua_pushstring(L, "table");
-    lua_call(L, 1, 0);
-
-    lua_pushcfunction(L, luaopen_string);
-    lua_pushstring(L, "string");
-    lua_call(L, 1, 0);
-
-    lua_pushcfunction(L, luaopen_package);
-    lua_pushstring(L, "package");
-    lua_call(L, 1, 0);
+    luaopen_audio(L);
 
     lua_register(L, "msleep", msleep_c);
 
     lua_gc(L, LUA_GCRESTART, 0);
 
     luaL_dofile(L, "init.lua");
+
+    if (1)
+    {
+        const char *script = "audio.play('nokia.mp3')";
+        int error;
+        error = luaL_loadbuffer(L, script, strlen(script), "line") ||
+                lua_pcall(L, 0, 0, 0);
+        if (error) {
+            fprintf(stderr, "%s", lua_tostring(L, -1));
+            lua_pop(L, 1);  /* pop error message from the stack */
+        }
+    }
 
     key_init();
     vm_keypad_register_event_callback(handle_keypad_event);

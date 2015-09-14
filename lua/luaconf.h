@@ -20,7 +20,7 @@
 #define LUA_CROSS_COMPILER
 #define LUA_USE_LINENOISE
 
-#define LUA_PATH_DEFAULT	"?.lua;?.lc;c:\\?.lua;c:\\?.lc;"
+#define LUA_PATH_DEFAULT	"?.lua;?.lc;C:\\?.lua;C:\\?.lc;"
 
 /*
 @@ LUA_ANSI controls the use of non-ansi features.

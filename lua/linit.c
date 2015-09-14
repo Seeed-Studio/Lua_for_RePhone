@@ -120,9 +120,11 @@ int luaopen_dummy(lua_State *L)
 
 static const luaL_Reg lualibs[] = {
   {"", luaopen_base},
-#ifdef LUA_PLATFORM_LIBS_REG
-  LUA_PLATFORM_LIBS_REG,
-#endif 
+  {LUA_LOADLIBNAME,	luaopen_package},
+  {LUA_TABLIBNAME,	luaopen_table},
+  {LUA_IOLIBNAME,	luaopen_io},
+  {LUA_STRLIBNAME,	luaopen_string},
+  {LUA_MATHLIBNAME,	luaopen_math},
 #if defined(LUA_PLATFORM_LIBS_ROM)
   LUA_PLATFORM_LIBS_ROM
 #endif
@@ -132,7 +134,7 @@ static const luaL_Reg lualibs[] = {
   {NULL, NULL}
 };
 
-const luaR_table lua_rotable[] = 
+const luaR_table lua_rotable[] =
 {
 #if defined(LUA_PLATFORM_LIBS_ROM) && LUA_OPTIMIZE_MEMORY == 2
 #undef _ROM
@@ -151,4 +153,3 @@ LUALIB_API void luaL_openlibs (lua_State *L) {
       lua_call(L, 1, 0);
     }
 }
-

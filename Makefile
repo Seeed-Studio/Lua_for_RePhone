@@ -10,7 +10,7 @@ OBJECTS += lua/lapi.o lua/lcode.o lua/ldebug.o lua/ldo.o lua/ldump.o lua/lfunc.o
 	lua/lundump.o lua/lvm.o lua/lzio.o lua/lrotable.o \
 	lua/lauxlib.o lua/lbaselib.o lua/ldblib.o lua/liolib.o lua/lmathlib.o lua/loslib.o lua/ltablib.o \
 	lua/lstrlib.o lua/loadlib.o lua/linit.o
-
+OBJECTS += laudiolib.o
 SYS_OBJECTS = ./linkit/lib/LINKIT10/src/gccmain.o
 INCLUDE_PATHS = -I. -I. -I./linkit/include -I./common -I./lua
 LIBRARY_PATHS = -L./linkit/lib
