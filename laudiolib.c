@@ -1,6 +1,6 @@
 
 #include "vmsystem.h"
-#include "vmlog.h" 
+#include "vmlog.h"
 #include "vmfs.h"
 #include "vmchset.h"
 #include "vmaudio_play.h"
@@ -16,7 +16,7 @@ static VMINT g_audio_interrupt_handle = 0; /* The handle of interrupt */
 /* The callback function when playing. */
 void audio_play_callback(VM_AUDIO_HANDLE handle, VM_AUDIO_RESULT result, void* userdata)
 {
-  switch (result) 
+  switch (result)
   {
       case VM_AUDIO_RESULT_END_OF_FILE:
     	/* When the end of file is reached, it needs to stop and close the handle */
@@ -77,8 +77,6 @@ static void _audio_play(char *name)
   }
   /* start to play */
   vm_audio_play_start(g_audio_handle);
-  /* set volume */
-  vm_audio_set_volume(VM_AUDIO_VOLUME_4);
   /* register interrupt callback */
   g_audio_interrupt_handle = vm_audio_register_interrupt_callback(audio_play_callback,NULL);
 }
@@ -87,9 +85,9 @@ static void _audio_play(char *name)
 int audio_play(lua_State *L)
 {
     char *name = lua_tostring(L, -1);
-    
+
     _audio_play(name);
-    
+
     return 0;
 }
 
@@ -105,7 +103,7 @@ int audio_stop(lua_State *L)
         vm_audio_clear_interrupt_callback(g_audio_interrupt_handle);
       }
   }
-  
+
   return 0;
 }
 
@@ -134,18 +132,18 @@ int audio_resume(lua_State *L)
 int audio_set_volume(lua_State *L)
 {
     int volume = lua_tointeger(L, -1);
-    
+
 	vm_audio_set_volume(volume);
-    
+
 	return 0;
 }
 
 int audio_get_volume(lua_State *L)
 {
     int volume = vm_audio_get_volume();
-    
+
     lua_pushnumber(L, volume);
-    
+
 	return 1;
 }
 

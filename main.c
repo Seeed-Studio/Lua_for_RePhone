@@ -11,6 +11,8 @@
 #include "console.h"
 #include "vmthread.h"
 
+#include "shell.h"
+
 #include "lua.h"
 #include "lualib.h"
 #include "lauxlib.h"
@@ -49,6 +51,9 @@ void handle_sysevt(VMINT message, VMINT param)
         case VM_EVENT_CREATE:
             sys_timer_id = vm_timer_create_precise(1000, sys_timer_callback, NULL);
             break;
+        case SHELL_MESSAGE_ID:
+            shell_docall();
+            break;
         case VM_EVENT_QUIT:
             break;
     }
@@ -78,18 +83,7 @@ static int msleep_c(lua_State *L)
     return 0;
 }
 
-VMINT32 __main_thread(VM_THREAD_HANDLE thread_handle, void* user_data)
-{
-    dotty(L);
 
-	for (;;)
-	{
-        // console_puts("hello, linkit\n");
-
-
-        console_putc(console_getc());
-	}
-}
 
 /* Entry point */
 void vm_main(void)
@@ -110,7 +104,7 @@ void vm_main(void)
 
     luaL_dofile(L, "init.lua");
 
-    if (1)
+    if (0)
     {
         const char *script = "audio.play('nokia.mp3')";
         int error;
@@ -128,6 +122,6 @@ void vm_main(void)
     /* register system events handler */
     vm_pmng_register_system_event_callback(handle_sysevt);
 
-    handle = vm_thread_create(__main_thread, NULL, 0);
+    handle = vm_thread_create(shell_thread, NULL, 0);
 	vm_thread_change_priority(handle, 245);
 }

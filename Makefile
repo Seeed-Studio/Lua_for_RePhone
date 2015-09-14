@@ -4,13 +4,13 @@
 
 # GCC_BIN = ../LinkIt-1.1-1.60/hardware/tools/gcc-arm-none-eabi-4.8.3-2014q1/bin/
 PROJECT = lua
-OBJECTS = main.o console.o lua/lua.o lua/linenoise.o
+OBJECTS = main.o console.o  lua/linenoise.o
 OBJECTS += lua/lapi.o lua/lcode.o lua/ldebug.o lua/ldo.o lua/ldump.o lua/lfunc.o lua/lgc.o lua/llex.o lua/lmem.o \
 	lua/lobject.o lua/lopcodes.o lua/lparser.o lua/lstate.o lua/lstring.o lua/ltable.o lua/ltm.o  \
 	lua/lundump.o lua/lvm.o lua/lzio.o lua/lrotable.o \
 	lua/lauxlib.o lua/lbaselib.o lua/ldblib.o lua/liolib.o lua/lmathlib.o lua/loslib.o lua/ltablib.o \
 	lua/lstrlib.o lua/loadlib.o lua/linit.o
-OBJECTS += laudiolib.o
+OBJECTS += laudiolib.o shell.o
 SYS_OBJECTS = ./linkit/lib/LINKIT10/src/gccmain.o
 INCLUDE_PATHS = -I. -I. -I./linkit/include -I./common -I./lua
 LIBRARY_PATHS = -L./linkit/lib
