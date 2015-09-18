@@ -1,4 +1,6 @@
 
+#include <string.h>
+
 #include "vmtype.h"
 #include "vmlog.h"
 #include "vmsystem.h"
@@ -18,6 +20,8 @@
 #include "lauxlib.h"
 
 extern int luaopen_audio(lua_State *L);
+extern int luaopen_gsm(lua_State *L);
+extern int luaopen_timer(lua_State *L);
 
 lua_State *L = NULL;
 
@@ -45,19 +49,7 @@ void sys_timer_callback(VM_TIMER_ID_PRECISE sys_timer_id, void* user_data)
 
 }
 
-void handle_sysevt(VMINT message, VMINT param)
-{
-    switch (message) {
-        case VM_EVENT_CREATE:
-            sys_timer_id = vm_timer_create_precise(1000, sys_timer_callback, NULL);
-            break;
-        case SHELL_MESSAGE_ID:
-            shell_docall();
-            break;
-        case VM_EVENT_QUIT:
-            break;
-    }
-}
+
 
 VMINT handle_keypad_event(VM_KEYPAD_EVENT event, VMINT code){
     /* output log to monitor or catcher */
@@ -67,7 +59,7 @@ VMINT handle_keypad_event(VM_KEYPAD_EVENT event, VMINT code){
         if (event == 3) {   // long pressed
 
         } else if (event == 2) { // down
-
+            printf("key is pressed\n");
         } else if (event == 1) { // up
 
         }
@@ -83,20 +75,17 @@ static int msleep_c(lua_State *L)
     return 0;
 }
 
-
-
-/* Entry point */
-void vm_main(void)
+void setup_lua()
 {
     VM_THREAD_HANDLE handle;
-    console_init();
-    console_puts("hello, linkit assist\n");
 
     L = lua_open();
     lua_gc(L, LUA_GCSTOP, 0);  /* stop collector during initialization */
     luaL_openlibs(L);  /* open libraries */
 
     luaopen_audio(L);
+    luaopen_gsm(L);
+    luaopen_timer(L);
 
     lua_register(L, "msleep", msleep_c);
 
@@ -116,12 +105,38 @@ void vm_main(void)
         }
     }
 
+    handle = vm_thread_create(shell_thread, L, 0);
+	vm_thread_change_priority(handle, 245);
+
+}
+
+void handle_sysevt(VMINT message, VMINT param)
+{
+    switch (message) {
+        case VM_EVENT_CREATE:
+            // sys_timer_id = vm_timer_create_precise(1000, sys_timer_callback, NULL);
+            setup_lua();
+            break;
+        case SHELL_MESSAGE_ID:
+            shell_docall(L);
+            break;
+        case VM_EVENT_QUIT:
+            break;
+    }
+}
+
+/* Entry point */
+void vm_main(void)
+{
+
+    console_init();
+    console_puts("hello, linkit assist\n");
+
+
+
     key_init();
     vm_keypad_register_event_callback(handle_keypad_event);
 
     /* register system events handler */
     vm_pmng_register_system_event_callback(handle_sysevt);
-
-    handle = vm_thread_create(shell_thread, NULL, 0);
-	vm_thread_change_priority(handle, 245);
 }

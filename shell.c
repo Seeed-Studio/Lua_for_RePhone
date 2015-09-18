@@ -1,5 +1,4 @@
 
-#include "shell.h"
 
 #include <signal.h>
 #include <stdio.h>
@@ -13,7 +12,7 @@
 #include "lauxlib.h"
 #include "lualib.h"
 
-extern lua_State *L;
+#include "shell.h"
 
 VM_THREAD_HANDLE g_main_handle;
 vm_thread_message_t g_shell_message = {SHELL_MESSAGE_ID, 0};
@@ -184,7 +183,7 @@ static int remote_docall(void)
     return g_shell_result;
 }
 
-void shell_docall(void)
+void shell_docall(lua_State *L)
 {
     g_shell_result = docall(L, 0, 0);
     vm_signal_post(g_shell_signal);
@@ -192,6 +191,8 @@ void shell_docall(void)
 
 VMINT32 shell_thread(VM_THREAD_HANDLE thread_handle, void* user_data)
 {
+    lua_State *L = (lua_State *)user_data;
+
     g_main_handle = vm_thread_get_main_handle();
     g_shell_message.message_id = SHELL_MESSAGE_ID;
     g_shell_signal = vm_signal_create();

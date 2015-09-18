@@ -1,4 +1,6 @@
 
+#include <string.h>
+
 #include "vmsystem.h"
 #include "vmlog.h"
 #include "vmfs.h"
@@ -148,7 +150,7 @@ int audio_get_volume(lua_State *L)
 }
 
 #undef MIN_OPT_LEVEL
-#define MIN_OPT_LEVEL 1
+#define MIN_OPT_LEVEL 0
 #include "lrodefs.h"
 
 const LUA_REG_TYPE audio_map[] =
@@ -164,8 +166,6 @@ const LUA_REG_TYPE audio_map[] =
 
 LUALIB_API int luaopen_audio(lua_State *L)
 {
-
     luaL_register(L, "audio", audio_map);
     return 1;
-
 }
