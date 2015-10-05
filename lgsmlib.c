@@ -6,12 +6,15 @@
 #include "vmgsm_tel.h"
 #include "vmchset.h"
 #include "vmgsm_sim.h"
+#include "vmgsm_sms.h"
 
 #include "lua.h"
 #include "lauxlib.h"
 
 enum VoiceCall_Status { IDLE_CALL, CALLING, RECEIVINGCALL, TALKING };
 
+int g_gsm_incoming_call_cb_ref = LUA_NOREF;
+int g_gsm_new_message_cb_ref = LUA_NOREF;
 vm_gsm_tel_call_listener_callback g_call_status_callback = NULL;
 
 static void (*g_call_state_changed_callback)(VMINT8) = NULL;
@@ -19,6 +22,8 @@ static void (*g_call_state_changed_callback)(VMINT8) = NULL;
 vm_gsm_tel_id_info_t g_uid_info;
 VMINT8 g_call_status = IDLE_CALL;
 VMINT8 g_number[42];
+
+extern lua_State *L;
 
 void call_listener_func(vm_gsm_tel_call_listener_data_t *data) {
   vm_log_info("call_listener_func");
@@ -32,6 +37,12 @@ void call_listener_func(vm_gsm_tel_call_listener_data_t *data) {
     g_call_status = RECEIVINGCALL;
 
     vm_log_info("incoming call");
+
+    if (g_gsm_incoming_call_cb_ref != LUA_NOREF) {
+        lua_rawgeti(L, LUA_REGISTRYINDEX, g_gsm_incoming_call_cb_ref);
+        lua_call(L, 0, 0);
+    }
+
   }
 
   else if (data->call_type == VM_GSM_TEL_INDICATION_OUTGOING_CALL) {
@@ -129,7 +140,7 @@ int _gsm_call(const char *phone_number) {
 }
 
 int gsm_call(lua_State *L) {
-  const char *phone_number = lua_tostring(L, -1);
+  const char *phone_number = luaL_checkstring(L, 1);
   int result = _gsm_call(phone_number);
   lua_pushnumber(L, result);
 
@@ -165,21 +176,19 @@ int gsm_hang(lua_State *L) {
   // vm_log_info("callhangCall");
 
   if (IDLE_CALL != g_call_status) {
-	  //	  req.action_id.sim   = g_uid_info.sim;
-	  //	  req.action_id.call_id = g_uid_info.call_id;
-	  //	  req.action_id.group_id = g_uid_info.group_id;
-	  req.action_id.sim = 1;
-	  req.action_id.call_id = 1;
-	  req.action_id.group_id = 1;
+    req.action_id.sim = g_uid_info.sim;
+    req.action_id.call_id = g_uid_info.call_id;
+    req.action_id.group_id = g_uid_info.group_id;
+    // req.action_id.sim = 1;
+    // req.action_id.call_id = 1;
+    // req.action_id.group_id = 1;
 
-	  data.action = VM_GSM_TEL_CALL_ACTION_END_SINGLE;
-	  data.data_action = (void *)&req;
-	  data.user_data = NULL;
-	  data.callback = call_voiceCall_callback;
+    data.action = VM_GSM_TEL_CALL_ACTION_END_SINGLE;
+    data.data_action = (void *)&req;
+    data.user_data = NULL;
+    data.callback = call_voiceCall_callback;
 
-	  result = vm_gsm_tel_call_actions(&data);
-
-
+    result = vm_gsm_tel_call_actions(&data);
   }
 
   lua_pushnumber(L, result);
@@ -187,23 +196,99 @@ int gsm_hang(lua_State *L) {
   return 1;
 }
 
+int gsm_on_call(lua_State *L)
+{
+    int ref;
+    lua_pushvalue(L, 1);
+    g_gsm_incoming_call_cb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    return 0;
+}
+
+/* The callback of sending SMS, for checking if an SMS is sent successfully. */
+void _gsm_text_callback(vm_gsm_sms_callback_t* callback_data){
+    if(callback_data->action == VM_GSM_SMS_ACTION_SEND){
+        vm_log_debug("send sms callback, result = %d", callback_data->result);
+    }
+}
+
+int gsm_text(lua_State *L)
+{
+    VMWCHAR number[42];
+    VMWCHAR content[100];
+    const char *phone_number = luaL_checkstring(L, 1);
+    const char *message = luaL_checkstring(L, 2);
+
+    vm_chset_ascii_to_ucs2(content, 100*2, message);
+	vm_chset_ascii_to_ucs2(number, 42*2, phone_number);
+
+
+    lua_pushnumber(L, vm_gsm_sms_send(number, content, _gsm_text_callback, NULL));
+
+    return 1;
+}
+
+int _gsm_on_new_message(vm_gsm_sms_event_t* event_data){
+    vm_gsm_sms_event_new_sms_t * event_new_message_ptr;
+    vm_gsm_sms_new_message_t * new_message_ptr = NULL;
+    char number[42];
+    char content[100];
+    /* Checks if this event is for new SMS message. */
+    if(event_data->event_id == VM_GSM_SMS_EVENT_ID_SMS_NEW_MESSAGE){
+        /* Gets the event info. */
+        event_new_message_ptr = (vm_gsm_sms_event_new_sms_t *)event_data->event_info;
+
+        /* Gets the message data. */
+        new_message_ptr  =  event_new_message_ptr->message_data;
+
+        /* Converts the message content to ASCII. */
+        vm_chset_ucs2_to_ascii((VMSTR)content, 100, (VMWSTR)event_new_message_ptr->content);
+        vm_chset_ucs2_to_ascii((VMSTR)number, 42, (VMWSTR)new_message_ptr->sms_center_number);
+
+        printf("\nnew message\nnumber:%s\n", (VMWSTR)new_message_ptr->sms_center_number);
+        printf("content:%s\n", content);
+
+        if (g_gsm_new_message_cb_ref != LUA_NOREF) {
+            lua_rawgeti(L, LUA_REGISTRYINDEX, g_gsm_new_message_cb_ref);
+            lua_pushstring(L, number);
+            lua_pushstring(L, content);
+            lua_call(L, 2, 0);
+        }
+
+        return 1;
+    }
+    else{
+        printf("sms new message interrupt number not NEW MESSAGE ID");
+        return 0;
+    }
+}
+
+int gsm_on_new_message(lua_State *L)
+{
+    int result;
+    lua_pushvalue(L, 1);
+    g_gsm_new_message_cb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+
+    lua_pushnumber(L, vm_gsm_sms_set_interrupt_event_handler(VM_GSM_SMS_EVENT_ID_SMS_NEW_MESSAGE, _gsm_on_new_message, NULL));
+
+    return 1;
+}
 
 #undef MIN_OPT_LEVEL
 #define MIN_OPT_LEVEL 0
 #include "lrodefs.h"
 
-const LUA_REG_TYPE gsm_map[] =
-{
-    {LSTRKEY("call"), LFUNCVAL(gsm_call)},
-    {LSTRKEY("answer"), LFUNCVAL(gsm_anwser)},
-    {LSTRKEY("hang"), LFUNCVAL(gsm_hang)},
-    {LNILKEY, LNILVAL}
-};
+const LUA_REG_TYPE gsm_map[] = {{LSTRKEY("call"), LFUNCVAL(gsm_call)},
+                                {LSTRKEY("answer"), LFUNCVAL(gsm_anwser)},
+                                {LSTRKEY("hang"), LFUNCVAL(gsm_hang)},
+                                {LSTRKEY("on_call"), LFUNCVAL(gsm_on_call)},
+                                {LSTRKEY("text"), LFUNCVAL(gsm_text)},
+                                {LSTRKEY("on_new_message"), LFUNCVAL(gsm_on_new_message)},
+                                {LNILKEY, LNILVAL}};
 
-LUALIB_API int luaopen_gsm(lua_State *L)
-{
-	vm_gsm_tel_call_reg_listener(call_listener_func);
+LUALIB_API int luaopen_gsm(lua_State *L) {
+  vm_gsm_tel_call_reg_listener(call_listener_func);
 
-    luaL_register(L, "gsm", gsm_map);
-    return 1;
+  luaL_register(L, "gsm", gsm_map);
+  return 1;
 }
