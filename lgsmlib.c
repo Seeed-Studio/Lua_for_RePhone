@@ -17,11 +17,9 @@ int g_gsm_incoming_call_cb_ref = LUA_NOREF;
 int g_gsm_new_message_cb_ref = LUA_NOREF;
 vm_gsm_tel_call_listener_callback g_call_status_callback = NULL;
 
-static void (*g_call_state_changed_callback)(VMINT8) = NULL;
-
 vm_gsm_tel_id_info_t g_uid_info;
 VMINT8 g_call_status = IDLE_CALL;
-VMINT8 g_number[42];
+VMINT8 g_incoming_number[42];
 
 extern lua_State *L;
 
@@ -33,14 +31,15 @@ void call_listener_func(vm_gsm_tel_call_listener_data_t *data) {
     g_uid_info.call_id = ind->uid_info.call_id;
     g_uid_info.group_id = ind->uid_info.group_id;
     g_uid_info.sim = ind->uid_info.sim;
-    strcpy(g_number, (char *)ind->num_uri);
+    strcpy(g_incoming_number, (char *)ind->num_uri);
     g_call_status = RECEIVINGCALL;
 
     vm_log_info("incoming call");
 
     if (g_gsm_incoming_call_cb_ref != LUA_NOREF) {
         lua_rawgeti(L, LUA_REGISTRYINDEX, g_gsm_incoming_call_cb_ref);
-        lua_call(L, 0, 0);
+        lua_pushstring(L, g_incoming_number);
+        lua_call(L, 1, 0);
     }
 
   }
@@ -50,7 +49,7 @@ void call_listener_func(vm_gsm_tel_call_listener_data_t *data) {
     g_uid_info.call_id = ind->uid_info.call_id;
     g_uid_info.group_id = ind->uid_info.group_id;
     g_uid_info.sim = ind->uid_info.sim;
-    strcpy(g_number, (char *)ind->num_uri);
+    strcpy(g_incoming_number, (char *)ind->num_uri);
     g_call_status = CALLING;
 
     vm_log_info("calling");
@@ -77,16 +76,6 @@ void call_listener_func(vm_gsm_tel_call_listener_data_t *data) {
   }
 
   vm_log_info("g_call_status is %d", g_call_status);
-
-  if (g_call_state_changed_callback) {
-    g_call_state_changed_callback(g_call_status);
-  }
-}
-
-void callregisterCallback(void (*call_state_changed_callback)(VMINT8)) {
-  g_call_state_changed_callback = call_state_changed_callback;
-
-  vm_gsm_tel_call_reg_listener(call_listener_func);
 }
 
 static void
@@ -196,7 +185,7 @@ int gsm_hang(lua_State *L) {
   return 1;
 }
 
-int gsm_on_call(lua_State *L)
+int gsm_on_incoming_call(lua_State *L)
 {
     int ref;
     lua_pushvalue(L, 1);
@@ -265,7 +254,7 @@ int _gsm_on_new_message(vm_gsm_sms_event_t* event_data){
 
 int gsm_on_new_message(lua_State *L)
 {
-    int result;
+    int ref;
     lua_pushvalue(L, 1);
     g_gsm_new_message_cb_ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
@@ -281,7 +270,7 @@ int gsm_on_new_message(lua_State *L)
 const LUA_REG_TYPE gsm_map[] = {{LSTRKEY("call"), LFUNCVAL(gsm_call)},
                                 {LSTRKEY("answer"), LFUNCVAL(gsm_anwser)},
                                 {LSTRKEY("hang"), LFUNCVAL(gsm_hang)},
-                                {LSTRKEY("on_call"), LFUNCVAL(gsm_on_call)},
+                                {LSTRKEY("on_incoming_call"), LFUNCVAL(gsm_on_incoming_call)},
                                 {LSTRKEY("text"), LFUNCVAL(gsm_text)},
                                 {LSTRKEY("on_new_message"), LFUNCVAL(gsm_on_new_message)},
                                 {LNILKEY, LNILVAL}};
