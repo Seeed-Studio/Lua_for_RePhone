@@ -1,22 +1,18 @@
 
-
-# USE_CUSTOM_TOUCHPAD = 1
-
-# GCC_BIN = ../LinkIt-1.1-1.60/hardware/tools/gcc-arm-none-eabi-4.8.3-2014q1/bin/
 PROJECT = lua
-OBJECTS = main.o console.o  lua/linenoise.o
-OBJECTS += lua/lapi.o lua/lcode.o lua/ldebug.o lua/ldo.o lua/ldump.o lua/lfunc.o lua/lgc.o lua/llex.o lua/lmem.o \
-	lua/lobject.o lua/lopcodes.o lua/lparser.o lua/lstate.o lua/lstring.o lua/ltable.o lua/ltm.o  \
-	lua/lundump.o lua/lvm.o lua/lzio.o lua/lrotable.o \
-	lua/lauxlib.o lua/lbaselib.o lua/ldblib.o lua/liolib.o lua/lmathlib.o lua/loslib.o lua/ltablib.o \
-	lua/lstrlib.o lua/loadlib.o lua/linit.o
-OBJECTS += laudiolib.o shell.o lgsmlib.o timer.o
-SYS_OBJECTS = ./linkit/lib/LINKIT10/src/gccmain.o
-INCLUDE_PATHS = -I. -I. -I./linkit/include -I./common -I./lua
-LIBRARY_PATHS = -L./linkit/lib
-LIBRARIES = ./linkit/lib/LINKIT10/armgcc/percommon.a -lm
-# LIBRARIES = -lmtk
-LINKER_SCRIPT = ./linkit/lib/LINKIT10/armgcc/scat.ld
+
+OBJECTS += src/main.o src/retarget.o src/shell.o src/lcd_sitronix_st7789s.o src/tp_goodix_gt9xx.o src/tp_i2c.o
+
+WORKSPACE_PATH = ./
+
+include $(WORKSPACE_PATH)lua/Makefile
+include $(WORKSPACE_PATH)bindings/Makefile
+
+SYS_OBJECTS += $(WORKSPACE_PATH)linkit/lib/LINKIT10/src/gccmain.o
+INCLUDE_PATHS += -I. -I$(LINKIT_ASSIST_SDK_PATH)linkit/include -I$(WORKSPACE_PATH)src -I$(WORKSPACE_PATH)bindings
+LIBRARY_PATHS += -L$(LINKIT_ASSIST_SDK_PATH)linkit/lib
+LIBRARIES += $(LINKIT_ASSIST_SDK_PATH)linkit/lib/LINKIT10/armgcc/percommon.a -lm
+LINKER_SCRIPT = $(LINKIT_ASSIST_SDK_PATH)linkit/lib/LINKIT10/armgcc/scat.ld
 
 ###############################################################################
 AS      = $(GCC_BIN)arm-none-eabi-as
@@ -25,25 +21,36 @@ CPP     = $(GCC_BIN)arm-none-eabi-g++
 LD      = $(GCC_BIN)arm-none-eabi-gcc
 OBJCOPY = $(GCC_BIN)arm-none-eabi-objcopy
 OBJDUMP = $(GCC_BIN)arm-none-eabi-objdump
-SIZE 	= $(GCC_BIN)arm-none-eabi-size
-PACK    = ./tools/PackTag
-PUSH    = ./tools/PushTool
+SIZE    = $(GCC_BIN)arm-none-eabi-size
+
+ifeq ($(OS),Windows_NT)
+	PACK    = $(WORKSPACE_PATH)tools/PackTag.exe
+	#PUSH    = $(LINKIT_ASSIST_SDK_PATH)tools/PushCmdShell.exe $(PROJECT_PATH)/$(PROJECT).vxp
+	PUSH    = $(WORKSPACE_PATH)tools/PushTool.exe -v -v -v -v -t arduino -clear -port $(PORT) -app $(PROJECT).vxp
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		PACK    = python $(WORKSPACE_PATH)tools/packtag.py
+		PUSH    = @echo use
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		PACK    = $(WORKSPACE_PATH)tools/PackTag
+		PUSH    = $(WORKSPACE_PATH)tools/PushTool -v -v -v -v -d arduino  -b $(PORT) -p $(PROJECT).vxp
+	endif
+endif
 
 CPU = -mcpu=arm7tdmi-s -mthumb -mlittle-endian
 CC_FLAGS = $(CPU) -c -fvisibility=hidden -fpic -O2
-CC_SYMBOLS = -D__HDK_LINKIT_ASSIST_2502__ -D__COMPILER_GCC__
-
-ifeq ($(USE_CUSTOM_TOUCHPAD), 1)
-	CC_SYMBOLS += -DCUSTOM_TOUCHPAD
-endif
+CC_SYMBOLS += -D__HDK_LINKIT_ASSIST_2502__ -D__COMPILER_GCC__
 
 LD_FLAGS = $(CPU) -O2 -Wl,--gc-sections --specs=nosys.specs -fpic -pie -Wl,-Map=$(PROJECT).map  -Wl,--entry=gcc_entry -Wl,--unresolved-symbols=report-all -Wl,--warn-common -Wl,--warn-unresolved-symbols
 LD_SYS_LIBS =
 
+
 all: $(PROJECT).vxp size
 
 clean:
-	rm -f $(PROJECT).vxp $(PROJECT).bin $(PROJECT).elf $(PROJECT).hex $(PROJECT).map $(PROJECT).lst $(OBJECTS) $(DEPS)
+	rm -f $(PROJECT).vxp $(PROJECT).bin $(PROJECT).elf $(PROJECT).hex $(PROJECT).map $(PROJECT).lst $(OBJECTS)
 
 .s.o:
 	$(AS) $(CPU) -o $@ $<
@@ -73,11 +80,8 @@ $(PROJECT).lst: $(PROJECT).elf
 
 lst: $(PROJECT).lst
 
-size:
+size: $(PROJECT).elf
 	$(SIZE) $(PROJECT).elf
 
 flash: $(PROJECT).vxp
-	$(PUSH) -v -v -v -v -t arduino -clear -port $(PORT) -app $(PROJECT).vxp
-
-DEPS = $(OBJECTS:.o=.d) $(SYS_OBJECTS:.o=.d)
--include $(DEPS)
+	$(PUSH)

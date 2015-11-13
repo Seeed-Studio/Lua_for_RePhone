@@ -13,7 +13,6 @@
 
 # Libraries
 *.lib
-*.a
 *.la
 *.lo
 
@@ -24,7 +23,6 @@
 *.dylib
 
 # Executables
-*.exe
 *.out
 *.app
 *.i*86

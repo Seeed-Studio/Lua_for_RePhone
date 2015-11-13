@@ -56,7 +56,7 @@ int timer_gc(lua_State *L)
 {
     timer_info_t *p = ((timer_info_t *)luaL_checkudata(L, -1, LUA_TIMER));
 
-    vm_timer_delete_precise(p->timer_id);
+//    vm_timer_delete_precise(p->timer_id);
     return 0;
 }
 

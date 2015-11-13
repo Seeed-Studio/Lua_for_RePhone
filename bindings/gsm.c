@@ -220,7 +220,6 @@ int gsm_text(lua_State *L)
 int _gsm_on_new_message(vm_gsm_sms_event_t* event_data){
     vm_gsm_sms_event_new_sms_t * event_new_message_ptr;
     vm_gsm_sms_new_message_t * new_message_ptr = NULL;
-    char number[42];
     char content[100];
     /* Checks if this event is for new SMS message. */
     if(event_data->event_id == VM_GSM_SMS_EVENT_ID_SMS_NEW_MESSAGE){
@@ -232,14 +231,13 @@ int _gsm_on_new_message(vm_gsm_sms_event_t* event_data){
 
         /* Converts the message content to ASCII. */
         vm_chset_ucs2_to_ascii((VMSTR)content, 100, (VMWSTR)event_new_message_ptr->content);
-        vm_chset_ucs2_to_ascii((VMSTR)number, 42, (VMWSTR)new_message_ptr->sms_center_number);
 
-        printf("\nnew message\nnumber:%s\n", (VMWSTR)new_message_ptr->sms_center_number);
+        printf("\nnew message\nnumber:%s\n", (char *)new_message_ptr->number);
         printf("content:%s\n", content);
 
         if (g_gsm_new_message_cb_ref != LUA_NOREF) {
             lua_rawgeti(L, LUA_REGISTRYINDEX, g_gsm_new_message_cb_ref);
-            lua_pushstring(L, number);
+            lua_pushstring(L, new_message_ptr->number);
             lua_pushstring(L, content);
             lua_call(L, 2, 0);
         }

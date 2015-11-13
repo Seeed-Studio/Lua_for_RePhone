@@ -412,8 +412,12 @@ int linenoise_savehistory( int id, const char *filename )
 
 #else // #ifdef BUILD_LINENOISE
 
+#include <stdio.h>
 #include <string.h>
-#include "console.h"
+
+extern int retarget_getc();
+extern void retarget_putc(char c);
+extern void retarget_puts(char *s); 
 
 int linenoise_getline( int id, char* buffer, int buffer_size, const char* prompt )
 {
@@ -421,13 +425,13 @@ int linenoise_getline( int id, char* buffer, int buffer_size, const char* prompt
     int line_position;
 start:
     /* show prompt */
-    console_puts(prompt);
+    retarget_puts(prompt);
 
     line_position = 0;
     memset(buffer, 0, buffer_size);
     while (1)
     {
-        ch = console_getc();
+        ch = retarget_getc(stdin);
         if (ch >= 0)
         {
             /* backspace key */
@@ -435,7 +439,7 @@ start:
             {
                 if (line_position > 0)
                 {
-                    console_puts("\x08 \x08");
+                    retarget_puts("\x08 \x08");
                     line_position--;
                 }
                 buffer[line_position] = 0;
@@ -452,10 +456,10 @@ start:
             }
 
             /* end of line */
-            if (ch == '\r' || ch == '\n')
+            if (ch == '\n')
             {
                 buffer[line_position] = 0;
-                console_putc('\n');
+                retarget_putc('\n');
                 if (line_position == 0)
                 {
                     /* Get a empty line, then go to get a new line */
@@ -474,7 +478,7 @@ start:
             }
 
             /* echo */
-            console_putc(ch);
+            retarget_putc(ch);
             buffer[line_position] = ch;
             ch = 0;
             line_position++;

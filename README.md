@@ -3,9 +3,8 @@
 ## Requirements
 + [gcc-arm-embedded](https://launchpad.net/gcc-arm-embedded)
 + make
-+ PackTag & PushTool from LinkIt Assist 2502 SDK (available for Windows)
 
-Add gcc-arm-embedded path to PATH variable, create `tools` direcotry and put PackTag & PushTool into it.
+Add gcc-arm-embedded path to PATH variable.
 
 ## Download
 
@@ -39,4 +38,36 @@ print('hello, lua')
 + timer
     - id = timer.create(interval, repeat_function)
     - timer.delete(id)
+    
++ gpio
+    - gpio.mode(pin, mode) - mode: gpio.INPUT, gpio.OUTPUT, gpio.INPUT_PULLUP
+    - gpio.read(pin)
+    - gpio.write(pin, value)
+    
++ i2c
+    - i2c.setup(address, speed)
+    - i2c.send(number [, string, table, ...])
+    - i2c.recv(size) - return string
+    - i2c.txrx(number [, string, table, ...], size)
+    
++ screen
+    - screen.init()
+    - screen.set_color(rgb)
+    - screen.get_color()
+    - screen.point(x, y)
+    - screen.line(x1, y1, x2, y2 [, rgb])
+    - screen.rectangle(x, y, width, height [, rgb])
+    - screen.fill(x, y, width, height [, rgb])
+    - screen.update()
+    - screen.set_brightness()
+    - screen.touch()
+
++ tcp
+    - s = tcp.connect(ip, port)
+    - tcp.write(s, str)
+    - tcp.read(s, size)
+    - tcp.close(s)
+    
++ https
+    - https.get(url, callback)
     
