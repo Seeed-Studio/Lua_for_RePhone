@@ -456,7 +456,7 @@ start:
             }
 
             /* end of line */
-            if (ch == '\n')
+            if (ch == '\n' || ch == '\r')
             {
                 buffer[line_position] = 0;
                 retarget_putc('\n');
