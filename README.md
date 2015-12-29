@@ -6,11 +6,9 @@
 
 Add gcc-arm-embedded path to PATH variable.
 
-## Download
+# Compile & Download
+Run `make` to get lua.vxp file, follow [the guide](http://www.seeedstudio.com/wiki/Lua_for_RePhone#Download_Lua_for_RePhone_Application) to download it to the RePhone. 
 
-```
-make flash PORT={linkit modem port}
-```
 
 ## Get started with Lua
 Use serial port tool like miniterm.py to open RePhone serial port via Breakout board and enter:
