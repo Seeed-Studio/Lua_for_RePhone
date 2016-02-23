@@ -8,9 +8,6 @@
 #include "vmgsm_tel.h"
 #include "vmgsm_sim.h"
 #include "vmtimer.h"
-#include "vmdcl.h"
-#include "vmdcl_kbd.h"
-#include "vmkeypad.h"
 #include "vmthread.h"
 
 #include "shell.h"
@@ -29,43 +26,16 @@ extern int luaopen_i2c(lua_State* L);
 extern int luaopen_tcp(lua_State* L);
 extern int luaopen_https(lua_State* L);
 extern int luaopen_bluetooth(lua_State* L);
+extern int luaopen_button(lua_State* L);
 
 lua_State* L = NULL;
 
 VM_TIMER_ID_PRECISE sys_timer_id = 0;
 
-void key_init(void)
-{
-    VM_DCL_HANDLE kbd_handle;
-    vm_dcl_kbd_control_pin_t kbdmap;
-
-    kbd_handle = vm_dcl_open(VM_DCL_KBD, 0);
-    kbdmap.col_map = 0x09;
-    kbdmap.row_map = 0x05;
-    vm_dcl_control(kbd_handle, VM_DCL_KBD_COMMAND_CONFIG_PIN, (void*)(&kbdmap));
-
-    vm_dcl_close(kbd_handle);
-}
 
 void sys_timer_callback(VM_TIMER_ID_PRECISE sys_timer_id, void* user_data)
 {
     vm_log_info("tick");
-}
-
-VMINT handle_keypad_event(VM_KEYPAD_EVENT event, VMINT code)
-{
-    /* output log to monitor or catcher */
-    vm_log_info("key event=%d,key code=%d", event, code); /* event value refer to VM_KEYPAD_EVENT */
-
-    if(code == 30) {
-        if(event == 3) { // long pressed
-
-        } else if(event == 2) { // down
-            printf("key is pressed\n");
-        } else if(event == 1) { // up
-        }
-    }
-    return 0;
 }
 
 static int msleep_c(lua_State* L)
@@ -92,6 +62,7 @@ void lua_setup()
     luaopen_tcp(L);
     luaopen_https(L);
     luaopen_bluetooth(L);
+    luaopen_button(L);
 
     lua_register(L, "msleep", msleep_c);
 
@@ -124,10 +95,7 @@ void vm_main(void)
 
     retarget_setup();
     fputs("hello, linkit assist\n", stdout);
-
-    key_init();
-    vm_keypad_register_event_callback(handle_keypad_event);
-
+    
     /* register system events handler */
     vm_pmng_register_system_event_callback(handle_sysevt);
 }

@@ -45,6 +45,9 @@ print('hello, lua')
 + timer
     - id = timer.create(interval, repeat_function)
     - timer.delete(id)
+
++ button
+    - button.attach(function (event) print('button:', event) end)
     
 + gpio
     - gpio.mode(pin, mode) - mode: gpio.INPUT, gpio.OUTPUT, gpio.INPUT_PULLUP
