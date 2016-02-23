@@ -38,16 +38,17 @@ print('hello, lua')
     - gsm.call(phone_number)
     - gsm.hang()
     - gsm.accept()
-    - gsm.on_incoming_call(function (phone_number) print('incoming call') end)
+    - [gsm.on_incoming_call(function (phone_number) print('incoming call') end)](https://github.com/Seeed-Studio/Lua_for_RePhone/wiki/Telephone-rings)
     - gsm.text(phone_number, message)
-    - gsm.on_new_message(function (phone_number, message) print('got a message') end)
+    - [gsm.on_new_message(function (phone_number, message) print('got a message') end)](https://github.com/Seeed-Studio/Lua_for_RePhone/wiki/Auto-reply-text-message)
+    
     
 + timer
     - id = timer.create(interval, repeat_function)
     - timer.delete(id)
 
 + button
-    - button.attach(function (event) print('button:', event) end)
+    - [button.attach(function (event) print('button:', event) end)](https://github.com/Seeed-Studio/Lua_for_RePhone/wiki/Speed-Dial)
     
 + gpio
     - gpio.mode(pin, mode) - mode: gpio.INPUT, gpio.OUTPUT, gpio.INPUT_PULLUP
@@ -79,5 +80,5 @@ print('hello, lua')
     - tcp.close(s)
     
 + https
-    - https.get(url, callback)
+    - [https.get(url, callback)](https://github.com/Seeed-Studio/Lua_for_RePhone/wiki/HTPPS-GET-to-trigger-an-event-of-IFTTT-Maker-channel)
     
