@@ -9,9 +9,18 @@ Add gcc-arm-embedded path to PATH variable.
 # Compile & Download
 Run `make` to get lua.vxp file, follow [the guide](http://www.seeedstudio.com/wiki/Lua_for_RePhone#Download_Lua_for_RePhone_Application) to download it to the RePhone. 
 
+1. [Upgrade firmware](http://www.seeedstudio.com/wiki/Arduino_IDE_for_RePhone_Kit#Update.2FFlash_the_Firmware) to get serial console support
+2. Hold the RePhone's button, and turn it into storage mode in which we'll be able to see a USB disk on the computer.
+3. Copy the vxp file to the disk
+4. Change the path of `autostart.txt`, which is in the root directory of the disk, with the new vxp file path. 
 
 ## Get started with Lua
-Use serial port tool like miniterm.py to open RePhone serial port via Breakout board and enter:
+
+>Note:
+>To use the serial console, [a firmware upgrade](http://www.seeedstudio.com/wiki/Arduino_IDE_for_RePhone_Kit#Update.2FFlash_the_Firmware) is a must. 
+
+
+Use serial port tool like miniterm.py to open RePhone USB Modem Port and enter:
 ```
 print('hello, lua')
 ```
