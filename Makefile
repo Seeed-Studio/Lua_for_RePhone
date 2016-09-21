@@ -28,15 +28,8 @@ ifeq ($(OS),Windows_NT)
 	#PUSH    = $(LINKIT_ASSIST_SDK_PATH)tools/PushCmdShell.exe $(PROJECT_PATH)/$(PROJECT).vxp
 	PUSH    = $(WORKSPACE_PATH)tools/PushTool.exe -v -v -v -v -t arduino -clear -port $(PORT) -app $(PROJECT).vxp
 else
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Linux)
-		PACK    = python $(WORKSPACE_PATH)tools/packtag.py
-		PUSH    = @echo use
-	endif
-	ifeq ($(UNAME_S),Darwin)
-		PACK    = $(WORKSPACE_PATH)tools/PackTag
-		PUSH    = $(WORKSPACE_PATH)tools/PushTool -v -v -v -v -d arduino  -b $(PORT) -p $(PROJECT).vxp
-	endif
+	PACK    = python $(WORKSPACE_PATH)tools/packtag.py
+	PUSH    = @echo use
 endif
 
 CPU = -mcpu=arm7tdmi-s -mthumb -mlittle-endian
