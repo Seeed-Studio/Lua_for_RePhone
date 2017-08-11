@@ -31,8 +31,8 @@ print('hello, lua')
     - audio.pause()
     - audio.resume()
     - audio.stop()
-    - audio.set_volome(n), n from 1 to 6
-    - audio.get_volome()
+    - audio.set_volume(n), n from 1 to 6
+    - audio.get_volume()
     
 + gsm
     - gsm.call(phone_number)
